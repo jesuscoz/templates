@@ -23,7 +23,7 @@
     }
   },
   "variables": {
-    "webPackage": "https://raw.githubusercontent.com/ibonilm/templates/master/artifacts/healthclinic.zip",
+    "webPackage": "https://devopsimmersion.blob.core.windows.net/artifacts/healthclinic.zip",
     "sqlserverName": "[concat('sql', uniqueString(resourceGroup().id))]",
     "serviceplanName": "[concat('serviceplan', uniqueString(resourceGroup().id))]",
     "healthclinicdevName": "[concat('healthclinicdev', uniqueString(resourceGroup().id))]",
