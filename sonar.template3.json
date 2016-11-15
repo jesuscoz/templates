@@ -18,7 +18,6 @@
     "adminPassword": "P2ssw0rd@Dev",
     "networkInterfaceName": "[concat('network', uniqueString(resourceGroup().id))]",
     "storageAccountType": "Standard_LRS",
-    "addressPrefix": "sonaruser",
     "publicIpAddressName": "[concat('public', uniqueString(resourceGroup().id))]",
     "publicIpAddressType": "Dynamic",
     "sqlConnectivityType": "Public",
@@ -34,14 +33,12 @@
     "sqlAuthenticationLogin": "sonaruser",
     "sqlAuthenticationPassword": "P2ssw0rd@Dev",
     "rServicesEnabled": "false",
-    "VNetName": "VNet",
-    "VNetPrefix": "10.0.0.0/16",
-    "VNetSubnet1Name": "Subnet-1",
-    "VNetSubnet1Prefix": "10.0.0.0/24",
-    "VNetSubnet2Name": "Subnet-2",
-    "VNetSubnet2Prefix": "10.0.1.0/24",
-    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('VNetName'))]",
-    "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('VNetSubnet1Name'))]"
+    "virtualNetworkName": "[concat('vnet', uniqueString(resourceGroup().id))]",
+    "addressPrefix": "10.0.0.0/16",
+    "subnetName": "Subnet",
+    "subnetPrefix": "10.0.0.0/24",
+    "vnetId": "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
+    "subnetRef": "[concat(variables('vnetId'), '/subnets/', variables('subnetName'))]"
   },
   "resources": [
     {
@@ -170,25 +167,28 @@
       }
     },
     {
-      "name": "[variables('networkInterfaceName')]",
+      "apiVersion": "2015-06-15",
       "type": "Microsoft.Network/networkInterfaces",
-      "apiVersion": "2016-09-01",
-      "location": "[parameters('location')]",
+      "name": "[variables('networkInterfaceName')]",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "NetworkInterface"
+      },
       "dependsOn": [
-        "[concat('Microsoft.Network/publicIpAddresses/', variables('publicIpAddressName'))]",
-        "[concat('Microsoft.Network/virtualNetworks/', variables('VNetName'))]"
+        "[concat('Microsoft.Network/publicIPAddresses/', variables('publicIPAddressName'))]",
+        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]"
       ],
       "properties": {
         "ipConfigurations": [
           {
             "name": "ipconfig1",
             "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPAddressName'))]"
+              },
               "subnet": {
                 "id": "[variables('subnetRef')]"
-              },
-              "privateIPAllocationMethod": "[variables('publicIpAddressType')]",
-              "publicIpAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))]"
               }
             }
           }
@@ -196,43 +196,39 @@
       }
     },
     {
-      "name": "[variables('publicIpAddressName')]",
-      "type": "Microsoft.Network/publicIpAddresses",
-      "apiVersion": "2016-09-01",
-      "location": "[parameters('location')]",
+      "apiVersion": "2015-06-15",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('publicIPAddressName')]",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "PublicIPAddress"
+      },
       "properties": {
-        "publicIpAllocationMethod": "[variables('publicIpAddressType')]",
+        "publicIPAllocationMethod": "[variables('publicIPAddressType')]",
         "dnsSettings": {
           "domainNameLabel": "[variables('virtualMachineName')]"
         }
       }
     },
     {
-      "name": "[variables('VNetName')]",
-      "type": "Microsoft.Network/virtualNetworks",
-      "location": "[resourceGroup().location]",
       "apiVersion": "2015-06-15",
-      "dependsOn": [],
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('virtualNetworkName')]",
+      "location": "[resourceGroup().location]",
       "tags": {
-        "displayName": "[variables('VNetName')]"
+        "displayName": "VirtualNetwork"
       },
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
-            "[variables('VNetPrefix')]"
+            "[variables('addressPrefix')]"
           ]
         },
         "subnets": [
           {
-            "name": "[variables('VNetSubnet1Name')]",
+            "name": "[variables('subnetName')]",
             "properties": {
-              "addressPrefix": "[variables('VNetSubnet1Prefix')]"
-            }
-          },
-          {
-            "name": "[variables('VNetSubnet2Name')]",
-            "properties": {
-              "addressPrefix": "[variables('VNetSubnet2Prefix')]"
+              "addressPrefix": "[variables('subnetPrefix')]"
             }
           }
         ]
