@@ -229,7 +229,8 @@
           "type": "config",
           "name": "connectionstrings",
           "dependsOn": [
-            "[concat('Microsoft.Web/Sites/', variables('healthclinic'))]"
+            "[concat('Microsoft.Web/Sites/', variables('healthclinic'))]",
+            "[concat('Microsoft.Web/sites/', variables('healthclinic'), '/Extensions/MSDeploy')]"
           ],
           "properties": {
             "DefaultConnection": {
@@ -243,7 +244,8 @@
           "type": "config",
           "apiVersion": "2015-08-01",
           "dependsOn": [
-            "[concat('Microsoft.Web/sites/', variables('healthclinic'))]"
+            "[concat('Microsoft.Web/sites/', variables('healthclinic'))]",
+            "[concat('Microsoft.Web/sites/', variables('healthclinic'), '/Extensions/MSDeploy')]"
           ],
           "tags": {
             "displayName": "AppSettings"
