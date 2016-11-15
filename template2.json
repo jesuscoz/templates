@@ -23,7 +23,7 @@
     }
   },
   "variables": {
-    "webPackage": "https://raw.githubusercontent.com/ibonilm/templates/master/artifacts/healthclinic.zip",
+    "webPackage": "https%3A%2F%2Fraw.githubusercontent.com%2Fibonilm%2Ftemplates%2Fmaster%2Fartifacts%2Fhealthclinic.zip",
     "sqlserverName": "[concat('sql', uniqueString(resourceGroup().id))]",
     "serviceplanName": "[concat('serviceplan', uniqueString(resourceGroup().id))]",
     "healthclinicdevName": "[concat('healthclinicdev', uniqueString(resourceGroup().id))]",
