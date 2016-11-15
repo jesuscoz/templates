@@ -20,12 +20,10 @@
         "2"
       ],
       "defaultValue": "0"
-    },
-    "webPackage": {
-      "type": "string"
     }
   },
   "variables": {
+    "webPackage": "https://raw.githubusercontent.com/ibonilm/templates/master/artifacts/healthclinic.zip",
     "sqlserverName": "[concat('sql', uniqueString(resourceGroup().id))]",
     "serviceplanName": "[concat('serviceplan', uniqueString(resourceGroup().id))]",
     "healthclinicdevName": "[concat('healthclinicdev', uniqueString(resourceGroup().id))]",
@@ -267,7 +265,7 @@
                 "displayName": "WebDeploy"
             },
           "properties": {
-            "packageUri": "[parameters('webPackage')]",
+            "packageUri": "[variables('webPackage')]",
             "dbType": "None",
             "connectionString": "",
             "setParameters": {
