@@ -33,8 +33,7 @@
     "sqlserverAdminLoginPassword": "P2ssw0rd",
     "databaseNamePro": "databasepro",
     "databaseNameDev": "databasedev",
-    "databaseName": "database",
-    "webPackage": "database"
+    "databaseName": "database"
   },
   "resources": [
     {
