@@ -1,0 +1,178 @@
+﻿{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "storageType": {
+      "type": "string",
+      "defaultValue": "Standard_LRS",
+      "allowedValues": [
+        "Standard_LRS",
+        "Standard_ZRS",
+        "Standard_GRS",
+        "Standard_RAGRS",
+        "Premium_LRS"
+      ]
+    },
+    "skuCapacityStreamAnalytics": {
+      "type": "string",
+      "allowedValues": [
+        "standard"
+      ],
+      "defaultValue": "standard"
+    }
+  },
+  "variables": {
+    "eventHub_name": "[concat('hub', uniqueString(resourceGroup().id))]",
+    "eventHub_serviceBusNamespace": "[concat('hub-ns', uniqueString(resourceGroup().id))]",
+    "eventHub_version": "2014-09-01",
+    "eventHub_defaultSASKeyName": "RootManageSharedAccessKey",
+    "authRuleResourceId": "[resourceId('Microsoft.Eventhub/namespaces/authorizationRules', variables('eventHub_serviceBusNamespace'), variables('eventHub_defaultSASKeyName'))]",
+    "eventHubConsumerGroupName": "asa",
+    "streamAnalytics_JobName": "[concat('stream', uniqueString(resourceGroup().id))]",
+    "storageName": "[concat('shadoop', uniqueString(resourceGroup().id))]"
+  },
+  "resources": [
+    {
+      "name": "[variables('storageName')]",
+      "type": "Microsoft.Storage/storageAccounts",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-06-15",
+      "dependsOn": [],
+      "tags": {
+        "displayName": "storage"
+      },
+      "properties": {
+        "accountType": "[parameters('storageType')]"
+      }
+    },
+    {
+      "apiVersion": "2014-09-01",
+      "name": "[variables('eventHub_serviceBusNamespace')]",
+      "type": "Microsoft.EventHub/namespaces",
+      "tags": {
+        "displayName": "Event Hub"
+      },
+      "location": "[resourceGroup().location]",
+      "resources": [
+        {
+          "apiVersion": "2014-09-01",
+          "name": "[variables('eventHub_name')]",
+          "tags": { "displayName": "Event Hub" },
+          "type": "eventHubs",
+          "dependsOn": [
+            "[concat('Microsoft.EventHub/namespaces/', variables('eventHub_serviceBusNamespace'))]"
+          ],
+          "properties": {
+            "path": "[variables('eventHub_name')]"
+          },
+          "resources": [
+            {
+              "apiVersion": "[variables('eventHub_version')]",
+              "name": "[variables('eventHubConsumerGroupName')]",
+              "type": "ConsumerGroups",
+              "tags": {
+                "displayName": "Consumer group"
+              },
+              "dependsOn": [
+                "[variables('eventHub_name')]"
+              ],
+              "properties": {
+
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "apiVersion": "2015-10-01",
+      "location": "[resourceGroup().location]",
+      "type": "Microsoft.StreamAnalytics/streamingjobs",
+      "name": "[variables('streamAnalytics_JobName')]",
+      "dependsOn": [
+        "[concat('Microsoft.EventHub/namespaces/', variables('eventHub_serviceBusNamespace'))]"
+      ],
+      "tags": {
+        "displayName": "Stream Analytics"
+      },
+      "properties": {
+        "sku": {
+          "name": "[parameters('skuCapacityStreamAnalytics')]"
+        },
+        "outputStartMode": "JobStartTime",
+        "eventsOutOfOrderPolicy": "Adjust",
+        "eventsOutOfOrderMaxDelayInSeconds": 0,
+        "inputs": [
+          {
+            "name": "hub-in",
+            "properties": {
+              "type": "stream",
+              "serialization": {
+                "type": "JSON",
+                "properties": {
+                  "encoding": "UTF8"
+                }
+              },
+              "datasource": {
+                "type": "Microsoft.ServiceBus/EventHub",
+                "properties": {
+                  "serviceBusNamespace": "[variables('eventHub_serviceBusNamespace')]",
+                  "sharedAccessPolicyName": "[variables('eventHub_defaultSASKeyName')]",
+                  "sharedAccessPolicyKey": "[listkeys(variables('authRuleResourceId'), variables('eventHub_version')).primaryKey]",
+                  "eventHubName": "[variables('eventHub_Name')]",
+                  "consumerGroupName": "[variables('eventHubConsumerGroupName')]"
+                }
+              }
+            }
+          }
+        ],
+        "transformation": {
+          "name": "skiresortTransformation",
+          "type": "Microsoft.StreamAnalytics/streamingjobs/transformations",
+          "properties": {
+          "streamingUnits": 1,
+          "query": "WITH Step1 AS (\r\n
+                SELECT [location],[sensor],[value],[timestamp]\r\n
+                FROM [hub-in] PARTITION BY [location]\r\n
+                )\r\n
+                SELECT *\r\n
+                INTO [out]\r\n
+                FROM [Step1] PARTITION BY [location];\r\n
+                "
+          }
+        },
+        "outputs": [
+          {
+            "name": "out",
+            "type": "Microsoft.StreamAnalytics/streamingjobs/outputs",
+            "properties": {
+              "datasource": {
+                "type": "Microsoft.Storage/Blob",
+                "properties": {
+                  "BlobPathPrefix": "archive",
+                  "pathPattern": "{date}/{time}",
+                  "dateFormat": "yyyy/MM/dd",
+                  "timeFormat": "HH",
+                  "Container": "archive",
+                  "StorageAccounts": [
+                    {
+                      "AccountKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageName')), '2015-06-15').key1]",
+                      "AccountName": "[variables('storageName')]"
+                    }
+                  ]
+                }
+              },
+              "Serialization": {
+                "Properties": {
+                  "Encoding": "UTF8",
+                  "FieldDelimiter": ";"
+                },
+                "Type": "Csv"
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
