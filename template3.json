@@ -132,7 +132,7 @@
       "apiVersion": "2014-04-01",
       "name": "[variables('healthclinicdevName')]",
       "type": "Microsoft.Insights/components",
-      "location": "Central US",
+	  "location": "[resourceGroup().location]",
       "dependsOn": [
         "[concat('Microsoft.Web/sites/', variables('healthclinicdevName'))]"
       ],
@@ -195,7 +195,7 @@
       "apiVersion": "2014-04-01",
       "name": "[variables('healthclinicproName')]",
       "type": "Microsoft.Insights/components",
-      "location": "Central US",
+      "location": "[resourceGroup().location]",
       "dependsOn": [
         "[concat('Microsoft.Web/sites/', variables('healthclinicproName'))]"
       ],
@@ -281,7 +281,7 @@
       "apiVersion": "2014-04-01",
       "name": "[variables('healthclinic')]",
       "type": "Microsoft.Insights/components",
-      "location": "Central US",
+      "location": "[resourceGroup().location]",
       "dependsOn": [
         "[concat('Microsoft.Web/sites/', variables('healthclinic'))]"
       ],
